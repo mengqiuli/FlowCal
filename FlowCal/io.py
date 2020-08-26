@@ -205,6 +205,7 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False, remov
     # If the TEXT segment does not end with delim, retain the valid last element here
     if end_index < len(raw) - 1:
         last_element = raw[end_index + 1: ]
+        warnings.warn('The last keywrod value is not flanked by the delimiter, a violation of FCS3.0 standard 3.2.6.')
         if len(re.findall(r'\w+', last_element)) == 0:
             last_element = None
     else:

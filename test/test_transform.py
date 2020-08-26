@@ -15,6 +15,7 @@ import FlowCal.io
 import FlowCal.transform
 import numpy as np
 import unittest
+import os
 
 class TestRFIArray(unittest.TestCase):
     def setUp(self):
@@ -157,7 +158,8 @@ class TestRFIFCSLog(unittest.TestCase):
     def setUp(self):
         self.channel_names = ['FSC-H', 'SSC-H', 'FL1-H', 
                                 'FL2-H', 'FL3-H', 'Time']
-        self.d = FlowCal.io.FCSData('test/Data001.fcs')
+        current_dir = os.path.abspath(__file__).replace(__file__, '') + os.path.sep
+        self.d = FlowCal.io.FCSData(current_dir + 'Data001.fcs')
         self.n_samples = self.d.shape[0]
 
     def test_rfi_original_integrity(self):
@@ -356,7 +358,8 @@ class TestRFIFCSLinear(unittest.TestCase):
                               'mCherry-A',
                               'mCherry-H',
                               'Time']
-        self.d = FlowCal.io.FCSData('test/Data004.fcs')
+        current_dir = os.path.abspath(__file__).replace(__file__, '') + os.path.sep
+        self.d = FlowCal.io.FCSData(current_dir + 'Data004.fcs')
         self.n_samples = self.d.shape[0]
 
     def test_rfi_original_integrity(self):
@@ -495,7 +498,8 @@ class TestMefFCS(unittest.TestCase):
     def setUp(self):
         self.channel_names = ['FSC-H', 'SSC-H', 'FL1-H', 
                                 'FL2-H', 'FL3-H', 'Time']
-        self.d = FlowCal.io.FCSData('test/Data001.fcs')
+        current_dir = os.path.abspath(__file__).replace(__file__, '') + os.path.sep
+        self.d = FlowCal.io.FCSData(current_dir + 'Data001.fcs')
         self.n_samples = self.d.shape[0]
         self.sc0 = lambda x: x + 10
         self.sc1 = lambda x: x**2

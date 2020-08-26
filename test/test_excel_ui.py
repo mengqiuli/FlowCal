@@ -20,7 +20,9 @@ class TestReadTable(unittest.TestCase):
     """
     def setUp(self):
         # Name of the file to read
-        self.filename = 'test/test_excel_ui.xlsx'
+        # self.filename = 'test/test_excel_ui.xlsx'
+        current_dir = os.path.abspath(__file__).replace(__file__, '') + os.path.sep
+        self.filename = current_dir + 'test_excel_ui.xlsx'
 
     def test_read_table(self):
         """

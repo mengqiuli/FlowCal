@@ -6,6 +6,7 @@
 import FlowCal.gate
 import numpy as np
 import unittest
+import os
 
 class TestStartEndGate(unittest.TestCase):
     
@@ -543,8 +544,11 @@ class TestDensity2dGate1(unittest.TestCase):
                                channels = ['FSC', 'SSC'],
                                gate_fraction = 0.3)[0]
         """
-        self.ungated_data = FlowCal.io.FCSData('test/Data003.fcs')
-        self.gated_data = np.load('test/Data003_gate_density2d.npy')
+        # self.ungated_data = FlowCal.io.FCSData('test/Data003.fcs')
+        # self.gated_data = np.load('test/Data003_gate_density2d.npy')
+        current_dir = os.path.abspath(__file__).replace(__file__, '') + os.path.sep
+        self.ungated_data = FlowCal.io.FCSData(current_dir + 'Data003.fcs')
+        self.gated_data = np.load(current_dir + 'Data003_gate_density2d.npy')
 
     def test_density2d(self):
         gated_data = FlowCal.gate.density2d(self.ungated_data,

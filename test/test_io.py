@@ -24,11 +24,18 @@ Files to test:
                     BD FACScan Flow Cytometer
     - Data004.fcs: FCS 3.0 including floating-point data
 """
-filenames = ['test/Data001.fcs',
-            'test/Data002.fcs',
-            'test/Data003.fcs',
-            'test/Data004.fcs',
+# filenames = ['test/Data001.fcs',
+#             'test/Data002.fcs',
+#             'test/Data003.fcs',
+#             'test/Data004.fcs',
+#             ]
+filenames = ['Data001.fcs',
+            'Data002.fcs',
+            'Data003.fcs',
+            'Data004.fcs',
             ]
+current_dir = os.path.abspath(__file__).replace(__file__, '') + os.path.sep
+filenames = [current_dir + x for x in filenames]
 
 class TestFCSDataLoading(unittest.TestCase):
     def setUp(self):

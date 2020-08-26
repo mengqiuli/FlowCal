@@ -9,9 +9,9 @@ import collections
 import datetime
 import six
 import warnings
-
+import re
 import numpy as np
-
+import warnings
 import FlowCal.plot
 
 encoding = 'ISO-8859-1'
@@ -96,7 +96,7 @@ def read_fcs_header_segment(buf, begin=0):
     header = FCSHeader._make(field_values)
     return header
 
-def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False):
+def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False, remove_extra_spaces=False):
     """
     Read TEXT segment of FCS file.
 
@@ -201,6 +201,15 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False):
     # TEXT segment characters which occur after the last instance of the
     # delimiter).
     end_index = raw.rfind(delim)
+
+    # If the TEXT segment does not end with delim, retain the valid last element here
+    if end_index < len(raw) - 1:
+        last_element = raw[end_index + 1: ]
+        if len(re.findall(r'\w+', last_element)) == 0:
+            last_element = None
+    else:
+        last_element = None
+
     if supplemental and end_index == -1:
         # Delimiter was not found. This should only be permitted for an empty
         # supplemental TEXT segment (primary TEXT segment should fail above
@@ -263,7 +272,7 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False):
                     # more delimiters, which is prohibited.
                     if supplemental:
                         raise ValueError("starting a TEXT segment keyword"
-                                         + " with a delimiter is prohibited")
+                                            + " with a delimiter is prohibited")
                     # If this is a primary TEXT segment, this is an ill-formed
                     # segment. Rationale: 1 empty element will always be
                     # consumed as the initial delimiter which a primary TEXT
@@ -280,7 +289,7 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False):
                     # one or more delimiters starting the first keyword, which
                     # is prohibited.
                     raise ValueError("starting a TEXT segment keyword with a"
-                                     + " delimiter is prohibited")
+                                        + " delimiter is prohibited")
             else:
                 # We encountered a non-empty element. Calculate the number of
                 # escaped delimiters and whether or not a true boundary
@@ -328,8 +337,8 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False):
                         # and a use case which is known to exist, so throw a
                         # warning and ignore the 2nd copy of the delimiter.
                         warnings.warn("detected ill-formed TEXT segment (ends"
-                                      + " with two delimiter characters)."
-                                      + " Ignoring last delimiter character")
+                                        + " with two delimiter characters)."
+                                        + " Ignoring last delimiter character")
                         reconstructed_KV_accumulator.append(pairs_list[idx])
                     else:
                         reconstructed_KV_accumulator[-1] = pairs_list[idx] + \
@@ -341,10 +350,24 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False):
             idx = idx - 1
 
     pairs_list_reconstructed = list(reversed(reconstructed_KV_accumulator))
+    # Add the last element to the list if it exists
+    if last_element is not None:
+        pairs_list_reconstructed.append(last_element)
 
     # List length should be even since all key-value entries should be pairs
     if len(pairs_list_reconstructed) % 2 != 0:
         raise ValueError("odd # of (keys + values); unpaired key or value")
+
+    # remove spaces at the beginning and end of strings, some FCS files seem 
+    # to have this problem.
+    if remove_extra_spaces:
+        warnings.warn('You enabled remove_extra_spaces, which is a risky hack for incorrectly formatted TEXT segments.')
+        def remove_spaces(string):
+            tmp = copy.deepcopy(string)
+            tmp = re.sub(pattern=r'^\s*', repl='', string=tmp, count=1)
+            tmp = re.sub(pattern=r'\s*$', repl='', string=tmp, count=1)
+            return tmp
+        pairs_list_reconstructed = [remove_spaces(x) for x in pairs_list_reconstructed]
 
     text = dict(zip(pairs_list_reconstructed[0::2],
                     pairs_list_reconstructed[1::2]))
@@ -729,7 +752,7 @@ class FCSFile(object):
        19937951.
 
     """
-    def __init__(self, infile):
+    def __init__(self, infile, remove_extra_spaces=False):
 
         self._infile = infile
 
@@ -749,7 +772,7 @@ class FCSFile(object):
             buf=f,
             begin=self._header.text_begin,
             end=self._header.text_end,
-            supplemental=False)
+            supplemental=False, remove_extra_spaces=remove_extra_spaces)
 
         if self._header.version in ('FCS3.0','FCS3.1'):
             stext_begin = int(self._text['$BEGINSTEXT'])   # required keyword
@@ -760,7 +783,7 @@ class FCSFile(object):
                     begin=stext_begin,
                     end=stext_end,
                     delim=delim,
-                    supplemental=True)[0]
+                    supplemental=True, remove_extra_spaces=remove_extra_spaces)[0]
                 self._text.update(stext)
 
         # Confirm FCS file assumptions. All queried keywords are required
@@ -808,7 +831,7 @@ class FCSFile(object):
                     begin=self._header.analysis_begin,
                     end=self._header.analysis_end,
                     delim=delim,
-                    supplemental=True)[0]
+                    supplemental=True, remove_extra_spaces=remove_extra_spaces)[0]
             except Exception as e:
                 warnings.warn("ANALYSIS segment could not be parsed ({})".\
                     format(str(e)))
@@ -823,7 +846,7 @@ class FCSFile(object):
                         begin=analysis_begin,
                         end=analysis_end,
                         delim=delim,
-                        supplemental=True)[0]
+                        supplemental=True, remove_extra_spaces=remove_extra_spaces)[0]
                 except Exception as e:
                     warnings.warn("ANALYSIS segment could not be parsed ({})".\
                         format(str(e)))
@@ -1569,10 +1592,11 @@ class FCSData(np.ndarray):
 
     # Functions involved in the creation of new arrays
 
-    def __new__(cls, infile):
+    # User can enable remove_extra_spaces as a fix for incorrectly formatted TEXT segments
+    def __new__(cls, infile, remove_extra_spaces=False):
 
         # Load FCS file
-        fcs_file = FCSFile(infile)
+        fcs_file = FCSFile(infile, remove_extra_spaces=remove_extra_spaces)
 
         ###
         # Channel-independent information

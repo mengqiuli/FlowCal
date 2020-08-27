@@ -16,6 +16,9 @@ import FlowCal.plot
 
 encoding = 'ISO-8859-1'
 
+some_required_keywords_fcs30 = ['$BEGINANALYSIS', '$BEGINDATA', '$BEGINSTEXT', '$BYTEORD', \
+    '$DATATYPE', '$ENDANALYSIS', '$ENDDATA', '$ENDSTEXT', '$MODE', '$NEXTDATA', '$PAR', '$TOT']
+
 ###
 # Utility functions for importing segments of FCS files
 ###
@@ -205,7 +208,6 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False, remov
     # If the TEXT segment does not end with delim, retain the valid last element here
     if end_index < len(raw) - 1:
         last_element = raw[end_index + 1: ]
-        warnings.warn('The last keywrod value is not flanked by the delimiter, a violation of FCS3.0 standard 3.2.6.')
         if len(re.findall(r'\w+', last_element)) == 0:
             last_element = None
     else:
@@ -351,13 +353,6 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False, remov
             idx = idx - 1
 
     pairs_list_reconstructed = list(reversed(reconstructed_KV_accumulator))
-    # Add the last element to the list if it exists
-    if last_element is not None:
-        pairs_list_reconstructed.append(last_element)
-
-    # List length should be even since all key-value entries should be pairs
-    if len(pairs_list_reconstructed) % 2 != 0:
-        raise ValueError("odd # of (keys + values); unpaired key or value")
 
     # remove spaces at the beginning and end of strings, some FCS files seem 
     # to have this problem.
@@ -369,6 +364,17 @@ def read_fcs_text_segment(buf, begin, end, delim=None, supplemental=False, remov
             tmp = re.sub(pattern=r'\s*$', repl='', string=tmp, count=1)
             return tmp
         pairs_list_reconstructed = [remove_spaces(x) for x in pairs_list_reconstructed]
+    
+    # Add the last element to the list if it exists
+    if last_element is not None and len(pairs_list_reconstructed) % 2 == 1:
+        check = [x in pairs_list_reconstructed[0::2] for x in some_required_keywords_fcs30]
+        if all(check):
+            warnings.warn('The last keywrod value is not flanked by the delimiter, a violation of FCS3.0 standard 3.2.6.')
+            pairs_list_reconstructed.append(last_element)
+
+    # List length should be even since all key-value entries should be pairs
+    if len(pairs_list_reconstructed) % 2 != 0:
+        raise ValueError("odd # of (keys + values); unpaired key or value")
 
     text = dict(zip(pairs_list_reconstructed[0::2],
                     pairs_list_reconstructed[1::2]))

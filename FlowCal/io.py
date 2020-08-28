@@ -16,8 +16,8 @@ import FlowCal.plot
 
 encoding = 'ISO-8859-1'
 
-some_required_keywords_fcs30 = ['$BEGINANALYSIS', '$BEGINDATA', '$BEGINSTEXT', '$BYTEORD', \
-    '$DATATYPE', '$ENDANALYSIS', '$ENDDATA', '$ENDSTEXT', '$MODE', '$NEXTDATA', '$PAR', '$TOT']
+some_required_keywords_fcs30 = ('$BEGINANALYSIS', '$BEGINDATA', '$BEGINSTEXT', '$BYTEORD', \
+    '$DATATYPE', '$ENDANALYSIS', '$ENDDATA', '$ENDSTEXT', '$MODE', '$NEXTDATA', '$PAR', '$TOT')
 
 ###
 # Utility functions for importing segments of FCS files

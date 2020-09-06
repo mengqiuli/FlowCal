@@ -1170,42 +1170,49 @@ def density2d(data,
         raise ValueError('two channels need to be specified')
     data_plot = data[:, channels]
 
-    # If ``data_plot.hist_bins()`` exists, obtain bin edges from it if
-    # necessary.
-    if hasattr(data_plot, 'hist_bins') and \
-            hasattr(data_plot.hist_bins, '__call__'):
-        # Check whether `bins` contains information for one or two axes
-        if hasattr(bins, '__iter__') and len(bins)==2:
-            # `bins` contains separate information for both axes
-            # If bins for the X axis is not an iterable, get bin edges from
-            # ``data_plot.hist_bins()``.
-            if not hasattr(bins[0], '__iter__'):
-                bins[0] = data_plot.hist_bins(channels=0,
-                                              nbins=bins[0],
-                                              scale=xscale)
-            # If bins for the Y axis is not an iterable, get bin edges from
-            # ``data_plot.hist_bins()``.
-            if not hasattr(bins[1], '__iter__'):
-                bins[1] = data_plot.hist_bins(channels=1,
-                                              nbins=bins[1],
-                                              scale=yscale)
-        else:
-            # `bins` contains information for one axis, which will be used
-            # twice.
-            # If bins is not an iterable, get bin edges from
-            # ``data_plot.hist_bins()``.
-            if not hasattr(bins, '__iter__'):
-                bins = [data_plot.hist_bins(channels=0,
-                                            nbins=bins,
-                                            scale=xscale),
-                        data_plot.hist_bins(channels=1,
-                                            nbins=bins,
-                                            scale=yscale)]
+    # This whole section is commented out because the hist_bins in data_plot
+    # does not seem to be generated properly, leaving data in the high range
+    # outside the plot (seems to cut off at 1E6). This could a problem with
+    # the fcs files. Need to look into it.
+    # Properly generated bin edges: [bin_edges_x, bin_edges_y], using 
+    # np.linspace or np.logspace are highly recommended as an argument to this function.
+    
+    # # If ``data_plot.hist_bins()`` exists, obtain bin edges from it if
+    # # necessary.
+    # if hasattr(data_plot, 'hist_bins') and \
+    #         hasattr(data_plot.hist_bins, '__call__'):
+    #     # Check whether `bins` contains information for one or two axes
+    #     if hasattr(bins, '__iter__') and len(bins)==2:
+    #         # `bins` contains separate information for both axes
+    #         # If bins for the X axis is not an iterable, get bin edges from
+    #         # ``data_plot.hist_bins()``.
+    #         if not hasattr(bins[0], '__iter__'):
+    #             bins[0] = data_plot.hist_bins(channels=0,
+    #                                           nbins=bins[0],
+    #                                           scale=xscale)
+    #         # If bins for the Y axis is not an iterable, get bin edges from
+    #         # ``data_plot.hist_bins()``.
+    #         if not hasattr(bins[1], '__iter__'):
+    #             bins[1] = data_plot.hist_bins(channels=1,
+    #                                           nbins=bins[1],
+    #                                           scale=yscale)
+    #     else:
+    #         # `bins` contains information for one axis, which will be used
+    #         # twice.
+    #         # If bins is not an iterable, get bin edges from
+    #         # ``data_plot.hist_bins()``.
+    #         if not hasattr(bins, '__iter__'):
+    #             bins = [data_plot.hist_bins(channels=0,
+    #                                         nbins=bins,
+    #                                         scale=xscale),
+    #                     data_plot.hist_bins(channels=1,
+    #                                         nbins=bins,
+    #                                         scale=yscale)]
 
-    else:
-        # Check if ``bins`` is None and raise error
-        if bins is None:
-            raise ValueError("bins should be specified")
+    # else:
+    #     # Check if ``bins`` is None and raise error
+    #     if bins is None:
+    #         raise ValueError("bins should be specified")
 
     # If colormap is not specified, use the default of this module
     if 'cmap' not in kwargs:
